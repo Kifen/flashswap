@@ -8,11 +8,7 @@ import "../FlashSwap.sol";
 
 contract AaveFlashSwap is FlashLoanReceiverBaseV2, Ownable {
 
-  FlashSwap public immutable flashSwap;
-
-  constructor(address _addressProvider, address _flashSwap) FlashLoanReceiverBaseV2(_addressProvider) public {
-    flashSwap = FlashSwap(_flashSwap);
-  }
+  constructor(address _addressProvider) FlashLoanReceiverBaseV2(_addressProvider) public {}
 
   function executeOperation(
   address[] calldata assets,
@@ -39,8 +35,8 @@ function performFlashSwap(address _coin, uint256 _amount, address[] memory asset
 
     address receiverAddress = address(this);
     address onBehalfOf = address(this);
-    bytes memory params = abi.encodeWithSelector(flashSwap.flashSwap.selector, assets, exchanges, _amount);
-
+    //bytes memory params = abi.encodeWithSelector(flashSwap.flashSwap.selector, assets, exchanges, _amount);
+    bytes memory params = "";
     uint16 referralCode = 0;
     uint256[] memory modes = new uint256[](_coins.length);
 
