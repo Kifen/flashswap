@@ -1,5 +1,5 @@
-const Migrations = artifacts.require("Migrations");
+const FlashSwap = artifacts.require("FlashSwap");
 
 module.exports = function (deployer) {
-  deployer.deploy(Migrations);
+  deployer.deploy(FlashSwap, );
 };

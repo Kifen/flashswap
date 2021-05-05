@@ -25,7 +25,7 @@ contract FlashSwap is Ownable {
     _;
   }
 
-  function flashSwap(address[] memory assets, uint256[] memory exchanges, address wallet, uint256 amount) public validExchanges(exchanges)onlyOwner  returns (bool) {
+  function flashSwap(address[] memory assets, uint256[] memory exchanges, uint256 amount) public validExchanges(exchanges)onlyOwner  returns (bool) {
     address input = assets[0];
     address output = assets[1] ;
     uint256 assetCount = 0;
