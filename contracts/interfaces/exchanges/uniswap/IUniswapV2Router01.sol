@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.6.10;
 
 interface IUniswapV2Router01 {
     function factory() external pure returns (address);

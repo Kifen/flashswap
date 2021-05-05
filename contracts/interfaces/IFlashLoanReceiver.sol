@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.6.10;
 
 import { ILendingPoolAddressesProviderV2 } from './flashloans/aave/ILendingPoolAddressesProviderV2.sol';
 import { ILendingPoolV2 } from './flashloans/aave/ILendingPoolV2.sol';
