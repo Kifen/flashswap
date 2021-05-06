@@ -4,7 +4,7 @@ pragma solidity ^0.6.10;
 import "./FlashLoanReceiverBaseV2.sol";
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../FlashSwap.sol";
+//import "../FlashSwap.sol";
 
 contract AaveFlashSwap is FlashLoanReceiverBaseV2, Ownable {
 

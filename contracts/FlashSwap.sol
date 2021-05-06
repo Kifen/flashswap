@@ -2,9 +2,10 @@
 pragma solidity ^0.6.10;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import { SafeMath } from '@openzeppelin/contracts/math/SafeMath.sol';
-import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import "./interfaces/exchanges/uniswap/IUniswapV2Router02.sol";
+//import { SafeMath } from '@openzeppelin/contracts/math/SafeMath.sol';
+//import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import "./exchanges/uniswap/interfaces/IUniswapV2Router02.sol";
+import "./exchanges/kyber/KyberNetworkProxy.sol";
 
 contract FlashSwap is Ownable {
   using SafeMath for uint256;
@@ -13,9 +14,11 @@ contract FlashSwap is Ownable {
   uint public deadline;
 
   IUniswapV2Router02 public immutable uniswapV2Router;
+  KyberNetworkProxy public immutable kyberNetworkProxy;
 
-  constructor(address _uniswapRouterProvider) public {
+  constructor(address _uniswapRouterProvider, KyberNetworkProxy _kyberProvider) public {
     uniswapV2Router = IUniswapV2Router02(_uniswapRouterProvider);
+    kyberNetworkProxy = _kyberProvider;
     deadline = block.timestamp + 300;
   }
 
@@ -54,22 +57,40 @@ contract FlashSwap is Ownable {
 
       _uniswap(amountIn, amountOut, path, address(this), deadline);
       return true;
+    } else if(_exchange == uint256(Exchanges.Kyber)) {
+
     }
   }
 
   function _uniswap(uint amountIn,  uint amountOutMin, address[] memory path, address to,  uint _deadline) private returns (bool) {
-      IERC20 token = IERC20(path[0]);
-      require (token.approve(address(uniswapV2Router), amountIn), "FlashSwap: Failed to set allowance");
+      //IERC20 token = IERC20(path[0]);
+      //require (token.approve(address(uniswapV2Router), amountIn), "FlashSwap: Failed to set allowance");
+      require(_approveSwap(address(uniswapV2Router), amountIn, path[0]), "FlashSwap: Failed to set allowance");
       uniswapV2Router.swapExactTokensForTokens(amountIn, amountOutMin, path, to, _deadline);
       return true;
   }
 
-  //  function getExchange(uint256 _exchange, address _tokenA, address _tokenB) public view returns (address) {
-  //   if(_exchange == uint256(Exchanges.Uniswap)) {
-  //     address pairAddress = uniswapV2Factory.getPair(_tokenA, _tokenB);
-  //     require(pairAddress != address(0), 'FlashSwap: This pool does not exist');
-  //     return pairAddress;
-  //   } else if(_exchange == uint256(Exchanges.Uniswap)) {}
-  // }
+  function _kyber(address _src, uint256 _srcAmount, address _dest) private returns (bool) {
+      ERC20 srcToken = ERC20(_src);
+      ERC20 destToken = ERC20(_dest);
+
+      require(srcToken.approve(address(kyberNetworkProxy), 0));
+      require(_approveSwap(address(kyberNetworkProxy), _srcAmount, _src), "FlashSwap: Failed to set allowance");
+      (uint256 expectedRate, uint256 worstRate) = kyberNetworkProxy.getExpectedRate(srcToken, destToken, _srcAmount);
+      kyberNetworkProxy.swapTokenToToken(IERC20(_src), _srcAmount, IERC20(_dest), expectedRate);
+  }
+
+  function _approveSwap(address spender, uint256 amount, address tokenAddress) private returns (bool) {
+    IERC20 token = IERC20(tokenAddress);
+    require(token.approve(spender, amount), "FlashSwap: Failed to approve");
+    return true;
+  }
+
+  function getExpectedRate(address _src, address _dest, uint256 amount) public view returns (uint256, uint256) {
+    ERC20 srcToken = ERC20(_src);
+    ERC20 destToken = ERC20(_dest);
+
+    return kyberNetworkProxy.getExpectedRate(srcToken, destToken, amount);
+  }
 }
 

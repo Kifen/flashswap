@@ -4,9 +4,9 @@ pragma solidity ^0.6.10;
 import { SafeMath } from '@openzeppelin/contracts/math/SafeMath.sol';
 import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { SafeERC20 } from '../libraries/SafeERC20.sol';
-import { IFlashLoanReceiverV2 } from '../interfaces/IFlashLoanReceiver.sol';
-import { ILendingPoolAddressesProviderV2 } from '../interfaces/flashloans/aave/ILendingPoolAddressesProviderV2.sol';
-import { ILendingPoolV2 } from '../interfaces/flashloans/aave/ILendingPoolV2.sol';
+import { IFlashLoanReceiverV2 } from './IFlashLoanReceiver.sol';
+import { ILendingPoolAddressesProviderV2 } from '../flashloans/aave/interfaces/ILendingPoolAddressesProviderV2.sol';
+import { ILendingPoolV2 } from '../flashloans/aave/interfaces/ILendingPoolV2.sol';
 
 /** 
     !!!
