@@ -10,12 +10,13 @@ contract FlashSwap is Ownable {
   using SafeMath for uint256;
 
   enum Exchanges{ Uniswap, Kyber, SushiSwap }
-  uint constant deadline = 10 minutes;
+  uint constant deadline;
 
   IUniswapV2Router02 public immutable uniswapV2Router;
 
   constructor(address _uniswapRouterProvider) public {
     uniswapV2Router = IUniswapV2Router02(_uniswapRouterProvider);
+    deadline = block.timestamp + 300;
   }
 
   modifier validExchanges(uint256[] memory _exchanges) {
@@ -34,7 +35,7 @@ contract FlashSwap is Ownable {
     while(assetCount < assets.length) {
       address _assetIn = input;
       address _assetOut = output;
-      _swap(exchanges[exchangeCount], _assetIn, _assetOut, amount);
+      swap(exchanges[exchangeCount], _assetIn, _assetOut, amount);
       exchangeCount.add(1);
       assetCount.add(1);
       input = assets[assetCount];
@@ -42,7 +43,7 @@ contract FlashSwap is Ownable {
     }
   }
 
-  function _swap(uint256 _exchange, address _assetIn, address _assetOut, uint amountIn) private returns (bool) {
+  function swap(uint256 _exchange, address _assetIn, address _assetOut, uint amountIn) public returns (bool) {
     if(_exchange == uint256(Exchanges.Uniswap)) {
       address[] memory path = new  address[](2);
       path[0] = _assetIn;
@@ -51,7 +52,7 @@ contract FlashSwap is Ownable {
       uint[] memory amounts = uniswapV2Router.getAmountsOut(amountIn, path);
       uint amountOut = amounts[amounts.length - 1];
 
-      require(_uniswap(amountIn, amountOut, path, address(this), deadline), "FlashSwap: Failed to swap on uniswap");
+      _uniswap(amountIn, amountOut, path, address(this), deadline);
       return true;
     }
   }
