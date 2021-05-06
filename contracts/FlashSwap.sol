@@ -10,7 +10,7 @@ contract FlashSwap is Ownable {
   using SafeMath for uint256;
 
   enum Exchanges{ Uniswap, Kyber, SushiSwap }
-  uint constant deadline;
+  uint public deadline;
 
   IUniswapV2Router02 public immutable uniswapV2Router;
 
