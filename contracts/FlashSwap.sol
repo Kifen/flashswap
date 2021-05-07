@@ -2,8 +2,6 @@
 pragma solidity ^0.6.10;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-//import { SafeMath } from '@openzeppelin/contracts/math/SafeMath.sol';
-//import { IERC20 } from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import "./exchanges/uniswap/interfaces/IUniswapV2Router02.sol";
 import "./exchanges/kyber/KyberNetworkProxy.sol";
 
@@ -11,15 +9,15 @@ contract FlashSwap is Ownable {
   using SafeMath for uint256;
 
   enum Exchanges{ Uniswap, Kyber, SushiSwap }
-  uint public deadline;
 
   IUniswapV2Router02 public immutable uniswapV2Router;
+  IUniswapV2Router02 public immutable sushiSwapRouter;
   KyberNetworkProxy public immutable kyberNetworkProxy;
 
-  constructor(address _uniswapRouterProvider, KyberNetworkProxy _kyberProvider) public {
+  constructor(address _uniswapRouterProvider, KyberNetworkProxy _kyberProvider, address _sushiSwapProvider) public {
     uniswapV2Router = IUniswapV2Router02(_uniswapRouterProvider);
+    sushiSwapRouter = IUniswapV2Router02(_sushiSwapProvider);
     kyberNetworkProxy = _kyberProvider;
-    deadline = block.timestamp + 300;
   }
 
   modifier validExchanges(uint256[] memory _exchanges) {
@@ -46,27 +44,45 @@ contract FlashSwap is Ownable {
     }
   }
 
-  function swap(uint256 _exchange, address _assetIn, address _assetOut, uint amountIn) public returns (bool) {
-    if(_exchange == uint256(Exchanges.Uniswap)) {
+  function swap(uint256 _exchange, address _assetIn, address _assetOut, uint amountIn) public onlyOwner returns (bool) {
+    uint deadline = block.timestamp + 300;
+    if(_exchange == uint256(Exchanges.Uniswap) || _exchange == uint256(Exchanges.SushiSwap)) {
       address[] memory path = new  address[](2);
       path[0] = _assetIn;
       path[1] = _assetOut;
 
-      uint[] memory amounts = uniswapV2Router.getAmountsOut(amountIn, path);
+      uint[] memory amounts;
+
+      if(_exchange == uint256(Exchanges.Uniswap)) {
+        amounts = uniswapV2Router.getAmountsOut(amountIn, path);
+      } else {
+        amounts = sushiSwapRouter.getAmountsOut(amountIn, path);
+      }
+
       uint amountOut = amounts[amounts.length - 1];
 
-      _uniswap(amountIn, amountOut, path, address(this), deadline);
+      if(_exchange == uint256(Exchanges.Uniswap)) {
+          require(_uniswap(amountIn, amountOut, path, address(this), deadline), "FlashSwap: Failed to swap on uniswap");      
+      } else {
+          require(_sushiSwap(amountIn, amountOut, path, address(this), deadline), "FlashSwap: Failed to swap on sushiswap");      
+      }
+
       return true;
     } else if(_exchange == uint256(Exchanges.Kyber)) {
-
-    }
+      require(_kyber(_assetIn, amountIn, _assetOut), "FlashSwap: Failed to swap on kyber");
+      return true;
+    } 
   }
 
   function _uniswap(uint amountIn,  uint amountOutMin, address[] memory path, address to,  uint _deadline) private returns (bool) {
-      //IERC20 token = IERC20(path[0]);
-      //require (token.approve(address(uniswapV2Router), amountIn), "FlashSwap: Failed to set allowance");
       require(_approveSwap(address(uniswapV2Router), amountIn, path[0]), "FlashSwap: Failed to set allowance");
       uniswapV2Router.swapExactTokensForTokens(amountIn, amountOutMin, path, to, _deadline);
+      return true;
+  }
+
+    function _sushiSwap(uint amountIn,  uint amountOutMin, address[] memory path, address to,  uint _deadline) private returns (bool) {
+      require(_approveSwap(address(sushiSwapRouter), amountIn, path[0]), "FlashSwap: Failed to set allowance");
+      sushiSwapRouter.swapExactTokensForTokens(amountIn, amountOutMin, path, to, _deadline);
       return true;
   }
 
@@ -78,6 +94,7 @@ contract FlashSwap is Ownable {
       require(_approveSwap(address(kyberNetworkProxy), _srcAmount, _src), "FlashSwap: Failed to set allowance");
       (uint256 expectedRate, uint256 worstRate) = kyberNetworkProxy.getExpectedRate(srcToken, destToken, _srcAmount);
       kyberNetworkProxy.swapTokenToToken(IERC20(_src), _srcAmount, IERC20(_dest), expectedRate);
+      return true;
   }
 
   function _approveSwap(address spender, uint256 amount, address tokenAddress) private returns (bool) {
