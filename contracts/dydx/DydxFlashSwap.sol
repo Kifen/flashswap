@@ -4,9 +4,9 @@
 pragma solidity ^0.6.10;
 pragma experimental ABIEncoderV2;
 
-import "./interfaces/ISoloMargin.sol";
-import "./interfaces/IWETH.sol";
-import "./interfaces/ICallee.sol";
+import "../flashloans/dydx/interfaces/ISoloMargin.sol";
+import "../flashloans/dydx/interfaces/IWETH.sol";
+import "../flashloans/dydx/interfaces/ICallee.sol";
 
 contract FlashLoanTemplate is ICallee {
     // The WETH token contract, since we're assuming we want a loan in WETH
