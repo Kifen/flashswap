@@ -8,7 +8,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract AaveFlashSwap is FlashLoanReceiverBaseV2, Ownable {
 
-  constructor(address _addressProvider) FlashLoanReceiverBaseV2(_addressProvider) public {}
+  string public name;
+  constructor(address _addressProvider) FlashLoanReceiverBaseV2(_addressProvider) public {
+        name = "KITA";    
+  }
 
   function executeOperation(
   address[] calldata assets,
@@ -22,11 +25,11 @@ contract AaveFlashSwap is FlashLoanReceiverBaseV2, Ownable {
         uint amountOwing = amounts[i].add(premiums[i]);
         IERC20(assets[i]).approve(address(LENDING_POOL), amountOwing);
     }
-        
+    name = "KIFEN";    
     return true;
 }
 
-function performFlashSwap(address _coin, uint256 _amount, address[] memory assets, uint256[] memory exchanges) public onlyOwner {
+function performFlashSwap(address _coin, uint256 _amount) public onlyOwner {
     address[] memory _coins = new address[](1);
     _coins[0] = _coin;
 
@@ -45,6 +48,7 @@ function performFlashSwap(address _coin, uint256 _amount, address[] memory asset
         modes[i] = 0;
     }
 
+    require(_amount == 2000, "REVERTED: HERE");
      LENDING_POOL.flashLoan(
             receiverAddress,
             _coins,
